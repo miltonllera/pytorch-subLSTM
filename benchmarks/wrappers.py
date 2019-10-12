@@ -10,7 +10,7 @@ class RNNClassifier(nn.Module):
         self.rnn_output_size = rnn_output_size
         self.rnn = rnn
         self.linear = nn.Linear(rnn_output_size, n_classes)
-        self.output_layer = nn.Softmax(dim=1)
+        self.output_layer = nn.LogSoftmax(dim=1)
 
     def reset_parameters(self):
         self.rnn.reset_parameters()
@@ -49,7 +49,7 @@ def init_model(model_type, hidden_size, input_size, n_layers,
             input_size=input_size,
             hidden_size=hidden_size,
             num_layers=n_layers,
-            fixed_forget=False,
+            # fixed_forget=False,
             batch_first=True,
             dropout=dropout
         )

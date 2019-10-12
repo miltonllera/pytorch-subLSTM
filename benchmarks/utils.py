@@ -44,10 +44,10 @@ def train(model, data_loader, criterion, optimizer, grad_clip,
         # If reusing hidden states, detach them from the computation graph 
         # of the previous batch. Using the previous value may speed up training 
         # but detaching is needed to avoid backprogating to the start of training.
-        hidden = detach_hidden_state(hidden) if track_hidden else None
+        # hidden = detach_hidden_state(hidden) if track_hidden else None
 
         # Forward and backward steps
-        outputs, hidden = model(inputs, hidden)
+        outputs, hidden = model(inputs)
         loss = criterion(outputs, labels)
 
         loss.backward()

@@ -12,6 +12,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset
 
+sys.path.insert(0, '../../src/')
 sys.path.insert(0, '../')
 
 from subLSTM.nn import SubLSTM
@@ -40,18 +41,18 @@ parser.add_argument('--gbias', type=float, default=0,
     help='gating bias')
 
 # Data parameters
-parser.add_argument('--seq-length', type=int, default=20,
+parser.add_argument('--seq-length', type=int, default=50,
     help='sequence length')
 parser.add_argument('--num-addends', type=int, default=2,
     help='the number of addends to be unmasked in each sequence'
     'must be less than the sequence length')
-parser.add_argument('--min-arg', type=float, default=-10,
+parser.add_argument('--min-arg', type=float, default=0,
     help='minimum value of the addends')
-parser.add_argument('--max-arg', type=float, default=10,
+parser.add_argument('--max-arg', type=float, default=1,
     help='maximum value of the addends')
-parser.add_argument('--training-size', type=int, default=1000,
+parser.add_argument('--training-size', type=int, default=10000,
     help='size of the randomly created training set')
-parser.add_argument('--testing-size', type=int, default=200,
+parser.add_argument('--testing-size', type=int, default=10000,
     help='size of the randomly created test set')
 parser.add_argument('--train-val-split', type=float, default=0.2,
     help='proportion of trainig data used for validation')
@@ -164,6 +165,10 @@ model = init_model(
     device=device,
     dropout=args.dropout
 )
+# model = nn.Sequential(
+#     SubLSTM(input_size=2, hidden_size=50,num_layers=1, bias=True, batch_first=True),
+#     nn.Linear(50, 1)
+# )
 
 ########################################################################################
 # SET UP OPTIMIZER & OBJECTIVE FUNCTION
