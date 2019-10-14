@@ -6,16 +6,41 @@ from torch import Tensor
 from torch.nn import Parameter
 from collections import namedtuple
 from typing import List, Tuple, Optional
+from .cell import *
 
-from .cell import SubLSTMCell, LayerNormSubLSTMCell, fixSubLSTMCell, LayerNormFixSubLSTMCell
+
+class PremulLayer(nn.Module):
+    def __init__(self, cell, *cell_args):
+        super(PremulLayer, self).__init__()
+
+        input_size, hidden_size = cell_args
+        self.weight_ih = Parameter(torch.randn(4 * hidden_size, input_size))
+        self.cell = cell(input_size, hidden_size)
+
+    
+    def forward(self,
+                inputs: Tensor,
+                state: Tuple[Tensor, Tensor]
+                ) -> Tuple[Tensor, Tuple[Tensor, Tensor]]:
+
+        inputs = torch.tensordot(
+            inputs, self.weight_ih.t(), 
+            dims=([2], [0])).unbind(0)
+
+        outputs: List[Tensor] = []
+
+        for i_t in inputs:
+            out, state = self.cell(i_t, state)
+            outputs.append(out)
+
+        return torch.stack(outputs), state
 
 
-class GRNLayer(jit.ScriptModule):
+class GRNLayer(nn.Module):
     def __init__(self, cell, *cell_args):
         super(GRNLayer, self).__init__()
         self.cell = cell(*cell_args)
 
-    @jit.script_method
     def forward(self,
                 input: Tensor,
                 state: Tuple[Tensor, Tensor]
@@ -29,12 +54,11 @@ class GRNLayer(jit.ScriptModule):
         return torch.stack(outputs), state
 
 
-class ReverseGRNLayer(jit.ScriptModule):
+class ReverseGRNLayer(nn.Module):
     def __init__(self, cell, *cell_args):
         super(ReverseGRNLayer, self).__init__()
         self.cell = cell(*cell_args)
 
-    @jit.script_method
     def forward(self,
                 input:Tensor,
                 state:Tuple[Tensor, Tensor]
@@ -48,7 +72,7 @@ class ReverseGRNLayer(jit.ScriptModule):
         return torch.stack(reverse(outputs)), state
 
 
-class BidirLayer(jit.ScriptModule):
+class BidirLayer(nn.Module):
     __constants__ = ['directions']
 
     def __init__(self, cell, *cell_args):
@@ -58,7 +82,6 @@ class BidirLayer(jit.ScriptModule):
             ReverseGRNLayer(cell, *cell_args),
         ])
 
-    @jit.script_method
     def forward(self,
                 input: Tensor,
                 states: List[Tuple[Tensor, Tensor]]
@@ -100,20 +123,20 @@ def init_states(inputs: Tensor,
     return states
 
 
-class SubLSTM(jit.ScriptModule):
+class SubLSTM(nn.Module):
     # Necessary for iterating through self.layers and dropout support
     __constants__ = ['layers', 'num_layers', 'batch_first', 'hidden_size']
 
     def __init__(self, input_size, hidden_size, num_layers, bias=True,
                 batch_first=False, dropout=0.0, bidirectional=False,
-                layer_norm=False, fix_forget=False):
+                layer_norm=False, fixed_forget=False):
         super(SubLSTM, self).__init__()
 
-        layer = BidirLayer if bidirectional else GRNLayer
-        if fix_forget:
-            cell = LayerNormSubLSTMCell if layer_norm else SubLSTMCell
-        else:
+        layer = BidirLayer if bidirectional else PremulLayer
+        if fixed_forget:
             cell = LayerNormFixSubLSTMCell if layer_norm else fixSubLSTMCell
+        else:
+            cell = LayerNormSubLSTMCell if layer_norm else PremulSubLSTMCell
 
         self.layers = init_stacked_lstm(
             num_layers, layer, cell, input_size, hidden_size)
@@ -130,7 +153,6 @@ class SubLSTM(jit.ScriptModule):
         self.hidden_size = hidden_size
 
 
-    @jit.script_method
     def forward(self,
                 input: Tensor,
                 states: Optional[List[Tuple[Tensor, Tensor]]]
