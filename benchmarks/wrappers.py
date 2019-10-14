@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.jit as jit
 
 from subLSTM.nn import SubLSTM
 
@@ -43,16 +44,18 @@ class RNNRegressor(nn.Module):
 
 
 def init_model(model_type, hidden_size, input_size, n_layers,
-                output_size, dropout, device, class_task=True):
+                output_size, dropout, device, class_task=True, script=True):
     if model_type == 'subLSTM':
         rnn = SubLSTM(
             input_size=input_size,
             hidden_size=hidden_size,
             num_layers=n_layers,
-            # fixed_forget=False,
+            fixed_forget=False,
             batch_first=True,
             dropout=dropout
         )
+        if script:
+            rnn = jit.script(rnn)
 
     elif model_type == 'fix-subLSTM':
         rnn = SubLSTM(
@@ -63,6 +66,8 @@ def init_model(model_type, hidden_size, input_size, n_layers,
             batch_first=True,
             dropout=dropout
         )
+        if script:
+            rnn = jit.script(rnn)
 
     elif model_type == 'LSTM':
         rnn = nn.LSTM(
