@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.jit as jit
 
-from subLSTM.nn import SubLSTM
+from subLSTM.nn.nn import SubLSTM
 
 class RNNClassifier(nn.Module):
     def __init__(self, rnn, rnn_output_size, n_classes):

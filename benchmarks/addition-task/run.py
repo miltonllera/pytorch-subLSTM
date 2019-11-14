@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader, Dataset
 sys.path.insert(0, '../../src/')
 sys.path.insert(0, '../')
 
-from subLSTM.nn import SubLSTM
+from subLSTM.nn.nn import SubLSTM
 from wrappers import init_model
 from utils import train, test
 
