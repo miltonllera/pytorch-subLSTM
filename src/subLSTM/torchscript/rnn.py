@@ -4,7 +4,6 @@ import torch.jit as jit
 import warnings
 from torch import Tensor
 from torch.nn import Parameter
-from collections import namedtuple
 from typing import List, Tuple, Optional
 from .cell import *
 
@@ -132,11 +131,11 @@ class SubLSTM(nn.Module):
                 layer_norm=False, fixed_forget=False):
         super(SubLSTM, self).__init__()
 
-        layer = BidirLayer if bidirectional else PremulLayer
+        layer = BidirLayer if bidirectional else GRNLayer
         if fixed_forget:
             cell = LayerNormFixSubLSTMCell if layer_norm else fixSubLSTMCell
         else:
-            cell = LayerNormSubLSTMCell if layer_norm else PremulSubLSTMCell
+            cell = LayerNormSubLSTMCell if layer_norm else SubLSTMCell
 
         self.layers = init_stacked_lstm(
             num_layers, layer, cell, input_size, hidden_size)
