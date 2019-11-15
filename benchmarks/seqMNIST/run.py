@@ -18,7 +18,6 @@ import torchvision.datasets as dataset
 sys.path.insert(0, '../../src/')
 sys.path.insert(0, '../')
 
-from subLSTM.nn.nn import SubLSTM
 from wrappers import init_model
 from utils import train, test, compute_accuracy
 
@@ -35,6 +34,7 @@ parser.add_argument('--nlayers', type=int, default=1,
     help='number of layers')
 parser.add_argument('--nhid', type=int, default=50,
     help='number of hidden units per layer')
+parser.add_argument('--script', action='store_true', help='Use TorchScript version')
 
 # Data parameters
 parser.add_argument('--data', type=str, default='MNIST',
@@ -131,7 +131,7 @@ model = init_model(
     model_type=args.model,
     n_layers=args.nlayers, hidden_size=args.nhid,
     input_size=input_size, output_size=10, class_task=True,
-    dropout=0.0, device=device
+    dropout=0.0, device=device, script=args.script
 )
 
 ########################################################################################
