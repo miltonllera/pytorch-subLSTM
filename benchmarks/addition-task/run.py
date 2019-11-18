@@ -15,7 +15,6 @@ from torch.utils.data import DataLoader, Dataset
 sys.path.insert(0, '../../src/')
 sys.path.insert(0, '../')
 
-from subLSTM.nn import SubLSTM
 from wrappers import init_model
 from utils import train, test
 
@@ -39,6 +38,7 @@ parser.add_argument('--gact', type=str, default='relu',
     help='gate activation function relu|sig')
 parser.add_argument('--gbias', type=float, default=0,
     help='gating bias')
+parser.add_argument('--script', action='store_true', help='Use TorchScript version')
 
 # Data parameters
 parser.add_argument('--seq-length', type=int, default=50,
@@ -163,7 +163,8 @@ model = init_model(
     n_layers=args.nlayers, hidden_size=args.nhid,
     input_size=input_size, output_size=responses, class_task=False,
     device=device,
-    dropout=args.dropout
+    dropout=args.dropout,
+    script=args.script
 )
 # model = nn.Sequential(
 #     SubLSTM(input_size=2, hidden_size=50,num_layers=1, bias=True, batch_first=True),
